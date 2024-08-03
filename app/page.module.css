@@ -1,21 +1,23 @@
 .main {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 6rem;
   min-height: 100vh;
+  background-color: #121212; /* Dark background */
 }
 
 .description {
-  display: inherit;
-  justify-content: inherit;
-  align-items: inherit;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-size: 0.85rem;
   max-width: var(--max-width);
   width: 100%;
   z-index: 2;
   font-family: var(--font-mono);
+  color: #e0e0e0;
 }
 
 .description a {
@@ -23,6 +25,7 @@
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
+  color: #ffffff;
 }
 
 .description p {
@@ -32,6 +35,7 @@
   background-color: rgba(var(--callout-rgb), 0.5);
   border: 1px solid rgba(var(--callout-border-rgb), 0.3);
   border-radius: var(--border-radius);
+  color: #ffffff;
 }
 
 .code {
@@ -108,6 +112,7 @@
 .logo {
   position: relative;
 }
+
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
   .card:hover {
