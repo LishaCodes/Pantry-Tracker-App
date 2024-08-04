@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { TextField, Button, Container, Typography, IconButton, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import { auth, db } from './firebase';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-import LoginPage from './LoginPage';
 import { Alert } from '@mui/material';
+import { auth, db } from './firebase';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
+import LoginPage from './LoginPage';
 
 export default function PantryPage() {
   const [item, setItem] = useState('');
@@ -28,16 +28,21 @@ export default function PantryPage() {
   useEffect(() => {
     if (user) {
       const itemsRef = collection(db, 'pantryItems');
-      const unsubscribe = onSnapshot(itemsRef, (snapshot) => {
-        const itemList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        console.log("Snapshot data:", snapshot.docs); // Log raw snapshot data
-        console.log("Mapped itemList:", itemList); // Log mapped items list
-        setItems(itemList);
-      }, (error) => {
-        console.error("Error fetching items: ", error);
-        setSnackbarMessage("Error fetching items.");
-        setSnackbarOpen(true);
-      });
+      const q = query(itemsRef, where("userId", "==", user.uid));
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const itemList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+          console.log("Snapshot data:", snapshot.docs);
+          console.log("Mapped itemList:", itemList);
+          setItems(itemList);
+        },
+        (error) => {
+          console.error("Error fetching items: ", error);
+          setSnackbarMessage("Error fetching items.");
+          setSnackbarOpen(true);
+        }
+      );
       return () => unsubscribe();
     }
   }, [user]);
@@ -45,17 +50,19 @@ export default function PantryPage() {
   const handleAddItem = async () => {
     if (item.trim() && quantity.trim() && expiry.trim()) {
       try {
-        await addDoc(collection(db, 'pantryItems'), { name: item, quantity, expiry });
-        console.log("Added item:", { name: item, quantity, expiry });
-        setItem('');
-        setQuantity('');
-        setExpiry('');
-        setDialogOpen(false);
-        setSnackbarMessage("Item added successfully.");
-        setSnackbarOpen(true);
+        if (user) {
+          await addDoc(collection(db, 'pantryItems'), { name: item, quantity, expiry, userId: user.uid });
+          console.log("Added item:", { name: item, quantity, expiry });
+          setItem('');
+          setQuantity('');
+          setExpiry('');
+          setDialogOpen(false);
+          setSnackbarMessage("Item added successfully.");
+          setSnackbarOpen(true);
+        }
       } catch (error) {
-        console.error("Error adding item: ", error);
-        setSnackbarMessage("Error adding item.");
+        console.error("Error adding item: ", error.message);
+        setSnackbarMessage("Error adding item: " + error.message);
         setSnackbarOpen(true);
       }
     } else {
@@ -77,8 +84,8 @@ export default function PantryPage() {
         setSnackbarMessage("Item updated successfully.");
         setSnackbarOpen(true);
       } catch (error) {
-        console.error("Error updating item: ", error);
-        setSnackbarMessage("Error updating item.");
+        console.error("Error updating item: ", error.message);
+        setSnackbarMessage("Error updating item: " + error.message);
         setSnackbarOpen(true);
       }
     } else {
@@ -94,8 +101,8 @@ export default function PantryPage() {
       setSnackbarMessage("Item deleted successfully.");
       setSnackbarOpen(true);
     } catch (error) {
-      console.error("Error deleting item: ", error);
-      setSnackbarMessage("Error deleting item.");
+      console.error("Error deleting item: ", error.message);
+      setSnackbarMessage("Error deleting item: " + error.message);
       setSnackbarOpen(true);
     }
   };
@@ -125,7 +132,7 @@ export default function PantryPage() {
 
   const handleLogout = () => {
     auth.signOut().catch((error) => {
-      console.error("Error signing out: ", error);
+      console.error("Error signing out: ", error.message);
     });
   };
 
@@ -146,7 +153,7 @@ export default function PantryPage() {
         padding: 0,
         minHeight: '100vh',
         position: 'relative',
-        backgroundColor: '#rgba(255, 255, 255, 0.9)', // Black background for the page
+        backgroundColor: 'rgba(255, 255, 255, 0.9)', // White background for the page
         color: '#fff', // White text color for overall page
       }}
     >
@@ -170,7 +177,7 @@ export default function PantryPage() {
       <Typography
         variant="h1"
         style={{
-          color: '#ffff', // Light blue color for heading
+          color: '#000', // Black color for heading
           marginBottom: '1rem',
           textAlign: 'center',
           fontSize: '3rem',
@@ -272,11 +279,15 @@ export default function PantryPage() {
           />
           <TextField
             label="Expiry Date"
+            type="date"
             value={expiry}
             onChange={(e) => setExpiry(e.target.value)}
             fullWidth
             margin="normal"
             variant="outlined"
+            InputLabelProps={{
+              shrink: true
+            }}
             InputProps={{
               style: {
                 color: '#000' // Black text color in input
@@ -285,10 +296,8 @@ export default function PantryPage() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={editingItem ? handleEditItem : handleAddItem} color="primary">
+          <Button onClick={handleCloseDialog} style={{ color: '#1E90FF' }}>Cancel</Button>
+          <Button onClick={editingItem ? handleEditItem : handleAddItem} style={{ color: '#1E90FF' }}>
             {editingItem ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
