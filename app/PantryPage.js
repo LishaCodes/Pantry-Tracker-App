@@ -19,6 +19,7 @@ export default function PantryPage() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(setUser);
@@ -140,6 +141,14 @@ export default function PantryPage() {
     setSnackbarOpen(false);
   };
 
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredItems = items.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (!user) {
     return <LoginPage />;
   }
@@ -187,17 +196,31 @@ export default function PantryPage() {
       >
         Pantry Tracker
       </Typography>
-      <Button 
-        onClick={() => handleOpenDialog()} 
-        variant="contained" 
-        style={{ 
-          backgroundColor: '#1E90FF', // Darker blue background
-          color: '#fff',
-          marginBottom: '20px'
-        }}
-      >
-        Add Item
-      </Button>
+      <div style={{ display: 'flex', marginBottom: '20px', width: '80%', justifyContent: 'space-between' }}>
+        <TextField
+          label="Search Pantry"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          variant="outlined"
+          style={{ flex: 1, marginRight: '10px' }}
+          InputProps={{
+            style: {
+              color: '#000' // Black text color in input
+            }
+          }}
+        />
+        <Button 
+          onClick={() => handleOpenDialog()} 
+          variant="contained" 
+          style={{ 
+            backgroundColor: '#1E90FF', // Darker blue background
+            color: '#fff',
+            marginBottom: '20px'
+          }}
+        >
+          Add Item
+        </Button>
+      </div>
       <TableContainer component={Paper} style={{ 
         marginBottom: '20px', 
         width: '80%', 
@@ -213,8 +236,8 @@ export default function PantryPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {items.length > 0 ? (
-              items.map((item) => (
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell style={{ color: '#000' }}>{item.name}</TableCell>
                   <TableCell style={{ color: '#000' }}>{item.quantity}</TableCell>
@@ -232,76 +255,59 @@ export default function PantryPage() {
             ) : (
               <TableRow>
                 <TableCell colSpan={4} style={{ textAlign: 'center', color: '#000' }}>
-                  No items found
+                  No items found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </TableContainer>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbarMessage.includes("Error") ? "error" : "success"}>
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
       <Dialog open={dialogOpen} onClose={handleCloseDialog}>
-        <DialogTitle style={{ color: '#000' }}>{editingItem ? 'Edit Item' : 'Add Item'}</DialogTitle>
+        <DialogTitle>{editingItem ? 'Edit Item' : 'Add Item'}</DialogTitle>
         <DialogContent>
           <TextField
+            autoFocus
+            margin="dense"
             label="Item Name"
+            type="text"
+            fullWidth
             value={item}
             onChange={(e) => setItem(e.target.value)}
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            InputProps={{
-              style: {
-                color: '#000' // Black text color in input
-              }
-            }}
           />
           <TextField
+            margin="dense"
             label="Quantity"
+            type="text"
+            fullWidth
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
-            fullWidth
-            margin="normal"
-            variant="outlined"
-            InputProps={{
-              style: {
-                color: '#000' // Black text color in input
-              }
-            }}
           />
           <TextField
+            margin="dense"
             label="Expiry Date"
             type="date"
+            fullWidth
             value={expiry}
             onChange={(e) => setExpiry(e.target.value)}
-            fullWidth
-            margin="normal"
-            variant="outlined"
             InputLabelProps={{
-              shrink: true
-            }}
-            InputProps={{
-              style: {
-                color: '#000' // Black text color in input
-              }
+              shrink: true,
             }}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} style={{ color: '#1E90FF' }}>Cancel</Button>
-          <Button onClick={editingItem ? handleEditItem : handleAddItem} style={{ color: '#1E90FF' }}>
+          <Button onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={editingItem ? handleEditItem : handleAddItem} color="primary">
             {editingItem ? 'Update' : 'Add'}
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity="success">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
